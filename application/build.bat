@@ -1,0 +1,1 @@
+pyinstaller --noconfirm --onefile --windowed --add-data "C:/Users/Jules/miniconda3/envs/SymbolScribe/lib/site-packages/customtkinter;customtkinter/" --add-data "symbols/*.png;symbols" --add-data "SymbolCNN.onnx;." .\SymbolScribe.py
