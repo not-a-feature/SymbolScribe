@@ -2,6 +2,12 @@
 
 Tired of forgetting LaTeX symbols? Symbol Scribe is here to help! This lightweight browser and standalone application recognizes 152 of the most common LaTeX characters. Simply draw your desired symbol, and with a click, copy the corresponding LaTeX code directly into your document.
 
+> [!TIP]
+> Try the web version:  https://juleskreuer.eu/projects/symbolscribe
+> 
+> or get the latest release of the Windows standalone application.
+> 
+
 ## How Symbol Scribe Works: The AI Under the Hood
 ### Model Architecture
 Symbol Scribe uses a convolutional neural network (CNN) to identify your handwritten symbols. Here's a breakdown of the process:
