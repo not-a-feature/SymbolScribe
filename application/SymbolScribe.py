@@ -11,6 +11,7 @@ import numpy as np
 base_path = path.dirname(__file__)
 model_path = path.abspath(path.join(base_path, "SymbolCNN.onnx"))
 symbol_path = path.join(base_path, "symbols")
+icon_path = path.join(base_path, "icon.ico")
 
 image_size = (32, 32)
 about_text = f"""
@@ -85,16 +86,17 @@ def infer(input_img):
 
 
 class SymbolScribeWindow:
-    def __init__(self, master):
-        self.master = master
-        master.title("SymbolScribe")
+    def __init__(self, main):
+        self.main = main
+        main.title("SymbolScribe")
         ctk.set_appearance_mode("System")  # Use system appearance mode
         ctk.set_default_color_theme("blue")
+        main.after(201, lambda: root.iconbitmap(icon_path))
 
         self.line_width = 16
 
         self.canvas = tk.Canvas(
-            master,
+            main,
             bg="lightgray",
             width=500,
             height=300,
@@ -110,7 +112,7 @@ class SymbolScribeWindow:
         self.current_line = None
 
         # Frame for buttons
-        button_frame = ctk.CTkFrame(master, fg_color="transparent")
+        button_frame = ctk.CTkFrame(main, fg_color="transparent")
         button_frame.pack(pady=10)
 
         # Undo button
@@ -132,7 +134,7 @@ class SymbolScribeWindow:
         self.reset_button.pack(side=tk.LEFT, padx=10)
 
         # Output area (using CTkFrame and CTkLabels)
-        output_frame = ctk.CTkFrame(master, fg_color="transparent")
+        output_frame = ctk.CTkFrame(main, fg_color="transparent")
         output_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
 
         label_frame = ctk.CTkFrame(output_frame, cursor="hand2")  # Frame for each result
@@ -140,8 +142,8 @@ class SymbolScribeWindow:
 
         ctk_bg_color = label_frame.cget("fg_color")
 
-        self.bg_color_light = tuple((c // 256 for c in master.winfo_rgb(ctk_bg_color[0])))
-        self.bg_color_dark = tuple((c // 256 for c in master.winfo_rgb(ctk_bg_color[1])))
+        self.bg_color_light = tuple((c // 256 for c in main.winfo_rgb(ctk_bg_color[0])))
+        self.bg_color_dark = tuple((c // 256 for c in main.winfo_rgb(ctk_bg_color[1])))
 
         self.output_labels = []
         self.result = []
@@ -285,13 +287,13 @@ class SymbolScribeWindow:
 
     def copy_latex(self, index):
         latex_cmd, _ = self.result[index][0]
-        self.master.clipboard_clear()
-        self.master.clipboard_append(latex_cmd)
+        self.main.clipboard_clear()
+        self.main.clipboard_append(latex_cmd)
 
         print(f"Copied LaTeX command: {latex_cmd}")
 
     def show_about(self):
-        about_window = ctk.CTkToplevel(self.master)
+        about_window = ctk.CTkToplevel(self.main)
         about_window.title("About SymbolScribe")
 
         about_label = ctk.CTkLabel(about_window, text=about_text, justify=tk.LEFT, wraplength=400)
