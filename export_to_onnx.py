@@ -3,7 +3,8 @@ import torch
 import os
 from symbols import symbols
 
-model_path = os.path.join("augmented_models", "checkpoint_22.pth")
+base_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(base_dir, "augmented_models_2", "checkpoint_26.pth")
 image_size = (32, 32)
 
 model = SymbolCNN(num_classes=len(symbols))  # Initialize the model
@@ -17,4 +18,4 @@ width = torch.tensor([10])
 height = torch.tensor([20])
 
 onnx_program = torch.onnx.dynamo_export(model, x, width, height)
-onnx_program.save("SymbolCNN.onnx")
+onnx_program.save(os.path.join(base_dir, "SymbolCNN.onnx"))

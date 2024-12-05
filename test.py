@@ -45,7 +45,7 @@ if __name__ == "__main__":
     output_dir = os.path.join(base_dir, "test_dataset")
     csv_path = os.path.join(base_dir, "test_dataset.csv")
 
-    model_dir = os.path.join(base_dir, "augmented_models")
+    model_dir = os.path.join(base_dir, "augmented_models_2")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     batch_size = min(num_samples, 10000)
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
-    plt.figure()
+    plt.figure(facecolor="#faf8f8")
 
     best_acc = 0
     best_checkpoint = ""
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             k_values,
             avg_acc,
             alpha=0.3,
-            label=f"{start} - {end}",
+            label=f"Avg. Epoch {start} - {end}",
         )
 
     plt.plot(
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         best_accuracies,
         marker="o",
         color="#4caf50",
-        label=f"Best Checkpoint ({best_checkpoint})",
+        label=f"Best Checkpoint (Epoch {best_checkpoint})",
     )
     print(accuracies)
 
