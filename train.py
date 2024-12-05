@@ -36,7 +36,8 @@ class SymbolDataset(Dataset):
         self.load_directly = load_directly
         self.num_workers = num_workers if num_workers else os.cpu_count() // 2
 
-        self.labels = [label_mapping[label] for label in self.data.iloc[:, 1]]
+        self.labels = [label_mapping[str(label)] for label in self.data.iloc[:, 1]]
+
         print(f"Dataset with {len(self.data)} samples.")
         if load_directly:
             with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
@@ -89,7 +90,7 @@ def log_metrics(metrics, epoch, metrics_path):
             writer.writerow(row)
 
 
-def train_model(model, train_loader, test_loader, num_epochs=10, learning_rate=0.002):
+def train_model(model, train_loader, test_loader, num_epochs=10, learning_rate=0.001):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -179,7 +180,6 @@ def train_model(model, train_loader, test_loader, num_epochs=10, learning_rate=0
         # Model Checkpoint
         model_path = os.path.join(model_dir, f"checkpoint_{epoch}.pth")
         torch.save(model.state_dict(), model_path)
-
         # Live Plotting
         axes[0].clear()
         axes[0].plot(metrics["train_loss"], label="Train Loss")
@@ -212,11 +212,11 @@ transform = transforms.Compose(
 )
 
 if __name__ == "__main__":
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.join("C:", "\\", "Users", "Jules", "Documents", "SymbolScribe_dev")
     dataset_dir = os.path.join(base_dir, "mixed_dataset")
     csv_path = os.path.join(base_dir, "mixed_dataset.csv")
-    model_dir = os.path.join(base_dir, "augmented_models")
-    metrics_path = os.path.join(model_dir, "augmented_metrics.csv")
+    model_dir = os.path.join(base_dir, "augmented_models_3")
+    metrics_path = os.path.join(model_dir, "augmented_metrics_3.csv")
 
     os.makedirs(model_dir, exist_ok=True)
     dataset = SymbolDataset(
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        # pin_memory=True,
+        pin_memory=True,
         # persistent_workers=True,
         # prefetch_factor=2,
     )
@@ -246,7 +246,7 @@ if __name__ == "__main__":
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        # pin_memory=True,
+        pin_memory=True,
         # persistent_workers=True,
         # prefetch_factor=2,
     )
