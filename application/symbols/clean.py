@@ -2,18 +2,9 @@ import os
 from PIL import Image, ImageChops, ImageOps
 
 # Configuration
-base_dir = os.path.join(
-    "C:",
-    "\\",
-    "Users",
-    "Jules",
-    "Documents",
-    "SymbolScribe",
-    "application",
-    "symbols",
-)
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
-crop_size = 155
+crop_size = 200
 
 
 def process_image(fn, dataset_dir):
@@ -37,9 +28,8 @@ def process_image(fn, dataset_dir):
     bottom = (height + crop_size) / 2
     img = img.crop((left, top, right, bottom))
 
-    img.save(
-        os.path.join(base_dir, img_path.replace("synthetic_dataset\\", ""))
-    )  # Save directly into base_dir
+    save_path = os.path.join(dataset_dir, "application", "symbols", fn)
+    img.save(save_path)
 
     l_image = img.convert("L")
     # We must also crop the alpha channel
@@ -49,7 +39,8 @@ def process_image(fn, dataset_dir):
     inverted_image = Image.merge("LA", (inverted_image, alpha))
 
     name, ext = os.path.splitext(fn)
-    inverted_image.save(os.path.join(base_dir, f"{name}_dark{ext}"))
+    save_path = os.path.join(dataset_dir, "application", "symbols", f"{name}_dark{ext}")
+    inverted_image.save(save_path)
 
 
 for fn in os.listdir(os.path.join(base_dir, "synthetic_dataset")):
