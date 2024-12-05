@@ -2,7 +2,7 @@ import tkinter as tk
 import customtkinter as ctk
 import onnxruntime as ort
 from os import path
-
+import sys
 from PIL import Image, ImageDraw
 from utils import crop_to_content, add_background_to_image
 from symbols import symbols
