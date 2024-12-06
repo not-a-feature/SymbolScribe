@@ -20,8 +20,15 @@ manual_csv_file = os.path.join(base_dir, "manual_dataset.csv")
 synthetic_dir = os.path.join(base_dir, "synthetic_dataset")
 synthetic_csv_file = os.path.join(base_dir, "synthetic_dataset.csv")
 
-number_samples_manual = 3
-number_samples_synthetic = 5
+number_samples_manual = 4
+number_samples_synthetic = 1
+
+min_patches = 4
+max_patches = 6
+patch_size_range = (0.1, 0.2)
+angle_range = (-15, 15)
+amplitude_range = (4, 8)
+period_range = (40, 60)
 
 
 # --- Transformation Functions with Random Parameters ---
@@ -29,39 +36,32 @@ def distort(img, shear_range=(-0.4, 0.4)):
     shear = random.uniform(*shear_range)
     transform = AffineTransform(shear=shear)
     distorted_array = warp(np.array(img), transform, mode="constant", cval=1)
-    return Image.fromarray((distorted_array * 255).astype(np.uint8)).convert("L")
 
-
-def rotate(img, angle_range=(-15, 15)):
+    img = Image.fromarray((distorted_array * 255).astype(np.uint8)).convert("L")
     angle = random.uniform(*angle_range)
     rotated_img = img.rotate(angle, resample=Image.BICUBIC, expand=True, fillcolor="white")
-    return rotated_img.convert("L")
+    return rotated_img
 
 
-def add_noise(img, amount_range=(1, 255)):
-    amount = random.randint(*amount_range)
+def add_noise(img, amount=0.5):
     img_array = np.array(img)
-    noise = np.random.randint(-amount, amount, size=img_array.shape, dtype=np.int16)
-    noisy_array = np.clip(img_array + noise, 0, 255).astype(np.uint8)
+    height, width = img_array.shape[:2]
+    num_pixels_to_change = int(height * width * amount)
+
+    # Create indices for pixels to change
+    indices = np.random.choice(height * width, num_pixels_to_change, replace=False)
+    row_indices = indices // width
+    col_indices = indices % width
+
+    # Randomly assign black or white to the chosen pixels
+    colors = np.random.choice([0, 255], num_pixels_to_change)
+    img_array[row_indices, col_indices] = colors
+
+    noisy_array = np.clip(img_array, 0, 255).astype(np.uint8)
     return Image.fromarray(noisy_array).convert("L")
 
 
-def zoom_and_shift(img, zoom_factor_range=(0.5, 1.4), shift_range=(-20, 20)):
-    zoom_factor = random.uniform(*zoom_factor_range)
-    shift_x = random.randint(*shift_range)
-    shift_y = random.randint(*shift_range)
-    width, height = img.size
-    new_width = int(width * zoom_factor)
-    new_height = int(height * zoom_factor)
-    resized_img = img.resize((new_width, new_height), Image.BICUBIC)
-    background = Image.new("L", (width, height), color=255)
-    left = (width - new_width) // 2 + shift_x
-    top = (height - new_height) // 2 + shift_y
-    background.paste(resized_img, (left, top))
-    return background
-
-
-def wave_distortion(img, amplitude_range=(2, 3), period_range=(45, 90)):
+def wave_distortion(img):
     amplitude = random.uniform(*amplitude_range)
     period = random.uniform(*period_range)
     img_array = np.array(img)
@@ -72,6 +72,25 @@ def wave_distortion(img, amplitude_range=(2, 3), period_range=(45, 90)):
     return Image.fromarray(img_array).convert("L")
 
 
+def add_patches(img):
+    num_patches = random.randint(min_patches, max_patches)
+    img_copy = img.copy()
+    for _ in range(num_patches):
+        patch_width = random.randint(
+            int(patch_size_range[0] * img.width),
+            int(patch_size_range[1] * img.width),
+        )
+        patch_height = random.randint(
+            int(patch_size_range[0] * img.height),
+            int(patch_size_range[1] * img.height),
+        )
+        patch = Image.new("L", (patch_width, patch_height), color="black")
+        x = random.randint(0, img.width - patch_width)
+        y = random.randint(0, img.height - patch_height)
+        img_copy.paste(patch, (x, y))
+    return img_copy
+
+
 def invert_colors(img):
     return ImageOps.invert(img)
 
@@ -79,7 +98,13 @@ def invert_colors(img):
 # --- Dataset Creation ---
 
 # Define transformation functions
-individual_transforms = [distort, rotate, wave_distortion, add_noise, invert_colors]
+individual_transforms = [
+    add_patches,
+    distort,
+    wave_distortion,
+    add_noise,
+    invert_colors,
+]
 
 # Generate all combinations of transform functions
 all_combinations = []
@@ -117,6 +142,8 @@ def process_image(line, dataset_dir, num_samples):
     bg = Image.new(img.mode, img.size, 255)
     diff = ImageChops.difference(img, bg)
     bbox = diff.getbbox()
+    if bbox is None:
+        bbox = (0, 0, 32, 32)
     img = img.crop(bbox)
 
     results = []
@@ -143,7 +170,7 @@ def process_image(line, dataset_dir, num_samples):
 
 # Generate the dataset in parallel
 def generate(lines, dataset_dir, num_samples):
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=18) as executor:
         with open(csv_file, "a", newline="") as csvfile:
             writer = csv.writer(csvfile)
             futures = [
@@ -162,11 +189,11 @@ with open(csv_file, "w", newline="") as csvfile:
 
 # Process manual and synthetic datasets
 with open(manual_csv_file, "r") as f:
-    lines = [l.strip("\n").split(",") for l in f.readlines()][1:]
+    lines = [line.split(",") for l in f.readlines() if (line := l.removesuffix("\n"))][1:]
 generate(lines, manual_dir, number_samples_manual)
 
 with open(synthetic_csv_file, "r") as f:
-    lines = [l.strip("\n").split(",") for l in f.readlines()][1:]
+    lines = [line.split(",") for l in f.readlines() if (line := l.removesuffix("\n"))][1:]
 generate(lines, synthetic_dir, number_samples_synthetic)
 
 print(f"Dataset created in '{output_dir}'")
