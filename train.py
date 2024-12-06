@@ -212,7 +212,7 @@ transform = transforms.Compose(
 )
 
 if __name__ == "__main__":
-    base_dir = os.path.join("C:", "\\", "Users", "Jules", "Documents", "SymbolScribe_dev")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     dataset_dir = os.path.join(base_dir, "mixed_dataset")
     csv_path = os.path.join(base_dir, "mixed_dataset.csv")
     model_dir = os.path.join(base_dir, "augmented_models_3")
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
-    batch_size = 5000
+    batch_size = 100
     num_workers = 1
     train_loader = DataLoader(
         train_dataset,
@@ -253,4 +253,4 @@ if __name__ == "__main__":
 
     num_classes = len(symbols)
     model = SymbolCNN(num_classes=num_classes, image_size=image_size)
-    train_model(model, train_loader, test_loader, num_epochs=100, learning_rate=0.002)
+    train_model(model, train_loader, test_loader, num_epochs=50, learning_rate=0.001)
