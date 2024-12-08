@@ -230,23 +230,23 @@ if __name__ == "__main__":
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
-    batch_size = 100
+    batch_size = 32
     num_workers = 1
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True,
+        # num_workers=num_workers,
+        # pin_memory=True,
         # persistent_workers=True,
         # prefetch_factor=2,
     )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True,
+        shuffle=True,
+        # num_workers=num_workers,
+        # pin_memory=True,
         # persistent_workers=True,
         # prefetch_factor=2,
     )
