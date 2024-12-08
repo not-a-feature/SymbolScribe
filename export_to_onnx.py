@@ -4,7 +4,7 @@ import os
 from symbols import symbols
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(base_dir, "augmented_models_2", "checkpoint_26.pth")
+model_path = os.path.join(base_dir, "augmented_models_3", "checkpoint_34.pth")
 image_size = (32, 32)
 
 model = SymbolCNN(num_classes=len(symbols))  # Initialize the model

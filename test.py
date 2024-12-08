@@ -45,7 +45,7 @@ if __name__ == "__main__":
     output_dir = os.path.join(base_dir, "test_dataset")
     csv_path = os.path.join(base_dir, "test_dataset.csv")
 
-    model_dir = os.path.join(base_dir, "augmented_models_2")
+    model_dir = os.path.join(base_dir, "augmented_models_3")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
