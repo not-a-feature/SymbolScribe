@@ -6,6 +6,10 @@ def crop_to_content(image):
     bg = Image.new(image.mode, image.size, 255)
     diff = ImageChops.difference(image, bg)
     bbox = diff.getbbox()
+    if bbox is None:
+        # Edge case for Empty image
+        bbox = (0, 0, 32, 32)
+
     image = image.crop(bbox)
     return image
 
