@@ -23,6 +23,7 @@ synthetic_csv_file = os.path.join(base_dir, "synthetic_dataset.csv")
 number_samples_manual = 4
 number_samples_synthetic = 1
 
+crop_padding = 50
 min_patches = 4
 max_patches = 6
 patch_size_range = (0.1, 0.2)
@@ -95,7 +96,9 @@ def invert_colors(img):
     return ImageOps.invert(img)
 
 
-# --- Dataset Creation ---
+def original(img):
+    return img
+
 
 # Define transformation functions
 individual_transforms = [
@@ -107,30 +110,15 @@ individual_transforms = [
 ]
 
 # Generate all combinations of transform functions
-all_combinations = []
+transformations = []
 for r in range(1, len(individual_transforms) + 1):
     for subset in itertools.combinations(individual_transforms, r):
-        all_combinations.append(subset)
+        transformations.append(subset)
 
-transform_names = ["original"] + [
-    transform_func.__name__ for transform_func in individual_transforms
-]
-all_combinations = [tuple([lambda x: x])] + all_combinations
+transformations = [tuple([original])] + transformations
 
-# Define combined transformations
-transformations = []
-for combination in all_combinations:
-    if len(combination) == 1:
-        transformations.append(combination[0])
-    else:
-
-        def combined_transform(img, combo=combination):
-            transformed_img = img.copy()
-            for transform in combo:
-                transformed_img = transform(transformed_img)
-            return transformed_img
-
-        transformations.append(combined_transform)
+transform_names = [transform_func.__name__ for transform_func in individual_transforms]
+transform_names = ["original"] + transform_names
 
 
 # Function to apply transformations and save transformed images
@@ -138,29 +126,47 @@ def process_image(line, dataset_dir, num_samples):
     base_filename, symbol = line
     img_path = os.path.join(dataset_dir, base_filename)
 
+    # Crop to symbol with padding
     img = Image.open(img_path).convert("L")
     bg = Image.new(img.mode, img.size, 255)
     diff = ImageChops.difference(img, bg)
     bbox = diff.getbbox()
+
     if bbox is None:
+        # Edge case for Empty image
         bbox = (0, 0, 32, 32)
-    img = img.crop(bbox)
+
+    cropped_img = img.crop(bbox)
+
+    patch_bbox = (
+        max(0, bbox[0] - crop_padding),  # Left
+        max(0, bbox[1] - crop_padding),  # Upper
+        min(bbox[2] + crop_padding, img.width),  # Right
+        min(bbox[3] + crop_padding, img.height),  # Lower
+    )
+
+    cropped_img_for_patches = img.crop(patch_bbox)
 
     results = []
     for i in range(num_samples):
-        for j, transform_func in enumerate(transformations):
-            transformed_img = transform_func(img.copy())
-            transform_flags = (
-                [
-                    1 if any(t.__name__ == transform_name for t in all_combinations[j]) else 0
-                    for transform_name in transform_names
-                ]
-                if isinstance(all_combinations[j], tuple)
-                else [
-                    1 if all_combinations[j].__name__ == transform_name else 0
-                    for transform_name in transform_names
-                ]
-            )
+        for j, transform_combo in enumerate(transformations):
+            if transform_combo[0].__name__ == "add_patches":
+                transformed_img = cropped_img_for_patches.copy()
+            else:
+                transformed_img = cropped_img.copy()
+
+            for transform_func in transform_combo:
+                transformed_img = transform_func(transformed_img)
+                if transform_func.__name__ == "add_patches":
+                    bg = Image.new(transformed_img.mode, transformed_img.size, 255)
+                    diff = ImageChops.difference(transformed_img, bg)
+                    bbox = diff.getbbox()
+                    transformed_img = transformed_img.crop(bbox)
+
+            transform_flags = [
+                1 if any(t.__name__ == transform_name for t in transform_combo) else 0
+                for transform_name in transform_names
+            ]
             cleaned_name = base_filename.removesuffix(".png")
             transformed_filename = f"{cleaned_name}_{i}_{j}.png"
             transformed_img.save(os.path.join(output_dir, transformed_filename))
@@ -181,6 +187,7 @@ def generate(lines, dataset_dir, num_samples):
                     writer.writerow(row)
 
 
+# --- Dataset Creation ---
 # Setup output CSV file
 os.makedirs(output_dir, exist_ok=True)
 with open(csv_file, "w", newline="") as csvfile:
