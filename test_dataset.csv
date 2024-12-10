@@ -149,7 +149,6 @@ w_drawn_0.png,w
 x_drawn_0.png,x
 y_drawn_0.png,y
 z_drawn_0.png,z
-space_drawn_0.png,~
 Upper_A_drawn_1.png,A
 Upper_B_drawn_1.png,B
 Upper_C_drawn_1.png,C
@@ -300,7 +299,6 @@ w_drawn_1.png,w
 x_drawn_1.png,x
 y_drawn_1.png,y
 z_drawn_1.png,z
-space_drawn_1.png,~
 Upper_A_drawn_2.png,A
 Upper_B_drawn_2.png,B
 Upper_C_drawn_2.png,C
@@ -452,7 +450,6 @@ w_drawn_2.png,w
 x_drawn_2.png,x
 y_drawn_2.png,y
 z_drawn_2.png,z
-space_drawn_2.png,~
 c_drawn_2.png,c
 Upper_A_drawn_3.png,A
 Upper_B_drawn_3.png,B
@@ -605,7 +602,6 @@ w_drawn_3.png,w
 x_drawn_3.png,x
 y_drawn_3.png,y
 z_drawn_3.png,z
-space_drawn_3.png,~
 bigcup_drawn_0.png,\bigcup
 bigcap_drawn_0.png,\bigcap
 setminus_drawn_0.png,\setminus
@@ -1117,7 +1113,6 @@ w_drawn_4.png,w
 x_drawn_4.png,x
 y_drawn_4.png,y
 z_drawn_4.png,z
-space_drawn_4.png,~
 bigcup_drawn_4.png,\bigcup
 bigcap_drawn_4.png,\bigcap
 setminus_drawn_4.png,\setminus

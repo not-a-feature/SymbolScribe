@@ -1,17 +1,35 @@
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageOps
 
 
-def crop_to_content(image):
-    """Crops image to the non-white content."""
-    bg = Image.new(image.mode, image.size, 255)
-    diff = ImageChops.difference(image, bg)
+def crop_to_content(img, image_size):
+    bg = Image.new(img.mode, img.size, 255)
+    diff = ImageChops.difference(img, bg)
     bbox = diff.getbbox()
-    if bbox is None:
-        # Edge case for Empty image
-        bbox = (0, 0, 32, 32)
 
-    image = image.crop(bbox)
-    return image
+    if bbox is None:
+        # Edge case for empty image
+        return None
+
+    # Crop to content
+    cropped_img = img.crop(bbox)
+
+    # Calculate dimensions to maintain width / height aspect ratio
+    cropped_width, cropped_height = cropped_img.size
+    target_height = max(cropped_height, int(cropped_width * (image_size[1] / image_size[0])))
+    target_width = max(cropped_width, int(cropped_height * (image_size[0] / image_size[1])))
+
+    # Add padding to center the cropped content
+    pad_left = (target_width - cropped_width) // 2
+    pad_top = (target_height - cropped_height) // 2
+    pad_right = target_width - cropped_width - pad_left
+    pad_bottom = target_height - cropped_height - pad_top
+
+    padded_img = ImageOps.expand(
+        cropped_img,
+        border=(pad_left, pad_top, pad_right, pad_bottom),
+        fill="white",
+    )
+    return padded_img
 
 
 def add_background_to_image(img, bg_color):

@@ -150,7 +150,7 @@ symbols = [
     (r"x", "x"),
     (r"y", "y"),
     (r"z", "z"),
-    (r"~", "space"),
+    # (r"~", "space"),
     (r"\bigcup", "bigcup"),
     (r"\bigcap", "bigcap"),
     (r"\setminus", "setminus"),

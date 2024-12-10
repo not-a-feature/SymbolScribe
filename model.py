@@ -1,19 +1,10 @@
 import torch
 import torch.nn as nn
-from PIL import Image, ImageChops
-
-
-def crop_to_content(image):
-    bg = Image.new(image.mode, image.size, 255)
-    diff = ImageChops.difference(image, bg)
-    bbox = diff.getbbox()
-    image = image.crop(bbox)
-    return image
 
 
 class SymbolCNN(nn.Module):
 
-    def __init__(self, num_classes, image_size=(32, 32), pre_crop_size=(500, 300)):
+    def __init__(self, num_classes, image_size, pre_crop_size=(500, 300)):
         super(SymbolCNN, self).__init__()
         self.image_size = image_size
         self.pre_crop_size = pre_crop_size

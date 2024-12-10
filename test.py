@@ -5,14 +5,16 @@ import torchvision.transforms as transforms
 import os
 import matplotlib.pyplot as plt
 
-from train import SymbolCNN, SymbolDataset, image_size
+from train import image_size
+from model import SymbolCNN
+from dataset import SymbolDataset
 from symbols import symbols
 import numpy as np
 
 top_N = 5
 num_checkpoints = 50
 num_chunks = 5
-skip_chunk = 1
+skip_chunk = 0
 
 
 def validate(model, dataloader, num_samples):
@@ -45,7 +47,7 @@ if __name__ == "__main__":
     output_dir = os.path.join(base_dir, "test_dataset")
     csv_path = os.path.join(base_dir, "test_dataset.csv")
 
-    model_dir = os.path.join(base_dir, "augmented_models_3")
+    model_dir = os.path.join(base_dir, "augmented_models_4")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -64,7 +66,7 @@ if __name__ == "__main__":
         load_directly=True,
     )
     num_samples = len(dataset)
-    batch_size = min(num_samples, 10000)
+    batch_size = 64
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
     plt.figure(facecolor="#faf8f8")
@@ -81,7 +83,7 @@ if __name__ == "__main__":
             print(f"Checkpoint {checkpoint_path} not found. Skipping.")
             continue
 
-        model = SymbolCNN(num_classes=len(symbols))
+        model = SymbolCNN(num_classes=len(symbols), image_size=image_size)
 
         cpt = torch.load(checkpoint_path, map_location=device, weights_only=True)
         model.load_state_dict(cpt)

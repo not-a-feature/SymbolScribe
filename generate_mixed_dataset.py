@@ -3,10 +3,12 @@ import csv
 import random
 import itertools
 import numpy as np
-from PIL import Image, ImageOps, ImageChops
+from PIL import Image, ImageOps
 from skimage.transform import AffineTransform, warp
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+from symbols import symbols
+from dataset import crop_to_content
 
 # Set random seed for reproducibility
 random.seed(123452345234)
@@ -23,10 +25,9 @@ synthetic_csv_file = os.path.join(base_dir, "synthetic_dataset.csv")
 number_samples_manual = 4
 number_samples_synthetic = 1
 
-crop_padding = 50
 min_patches = 4
 max_patches = 6
-patch_size_range = (0.1, 0.2)
+patch_size_range = (0.05, 0.2)
 angle_range = (-15, 15)
 amplitude_range = (4, 8)
 period_range = (40, 60)
@@ -126,51 +127,40 @@ def process_image(line, dataset_dir, num_samples):
     base_filename, symbol = line
     img_path = os.path.join(dataset_dir, base_filename)
 
-    # Crop to symbol with padding
+    # Load image and convert to grayscale
     img = Image.open(img_path).convert("L")
-    bg = Image.new(img.mode, img.size, 255)
-    diff = ImageChops.difference(img, bg)
-    bbox = diff.getbbox()
+    cropped_img = crop_to_content(img)
 
-    if bbox is None:
-        # Edge case for Empty image
-        bbox = (0, 0, 32, 32)
-
-    cropped_img = img.crop(bbox)
-
-    patch_bbox = (
-        max(0, bbox[0] - crop_padding),  # Left
-        max(0, bbox[1] - crop_padding),  # Upper
-        min(bbox[2] + crop_padding, img.width),  # Right
-        min(bbox[3] + crop_padding, img.height),  # Lower
-    )
-
-    cropped_img_for_patches = img.crop(patch_bbox)
+    if cropped_img is None:
+        return []
 
     results = []
     for i in range(num_samples):
         for j, transform_combo in enumerate(transformations):
             if transform_combo[0].__name__ == "add_patches":
-                transformed_img = cropped_img_for_patches.copy()
+                skip_patches = 1
+                transformed_img = img.copy()
+                transformed_img = transform_combo[0](transformed_img)
+                transformed_img = crop_to_content(transformed_img)
             else:
+                skip_patches = 0
                 transformed_img = cropped_img.copy()
 
-            for transform_func in transform_combo:
+            for transform_func in transform_combo[skip_patches:]:
                 transformed_img = transform_func(transformed_img)
-                if transform_func.__name__ == "add_patches":
-                    bg = Image.new(transformed_img.mode, transformed_img.size, 255)
-                    diff = ImageChops.difference(transformed_img, bg)
-                    bbox = diff.getbbox()
-                    transformed_img = transformed_img.crop(bbox)
 
             transform_flags = [
                 1 if any(t.__name__ == transform_name for t in transform_combo) else 0
                 for transform_name in transform_names
             ]
+
             cleaned_name = base_filename.removesuffix(".png")
-            transformed_filename = f"{cleaned_name}_{i}_{j}.png"
-            transformed_img.save(os.path.join(output_dir, transformed_filename))
+            transformed_filename = f"{cleaned_name}_sample_{i}_transform_{j}.png"
+            transformed_path = os.path.join(output_dir, transformed_filename)
+
+            transformed_img.save(transformed_path)
             results.append([transformed_filename, symbol] + transform_flags)
+
     return results
 
 
@@ -187,20 +177,27 @@ def generate(lines, dataset_dir, num_samples):
                     writer.writerow(row)
 
 
-# --- Dataset Creation ---
-# Setup output CSV file
-os.makedirs(output_dir, exist_ok=True)
-with open(csv_file, "w", newline="") as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(["filename", "latex_symbol"] + transform_names)
+if __name__ == "__main__":
+    # --- Dataset Creation ---
+    # Setup output CSV file
+    os.makedirs(output_dir, exist_ok=True)
+    with open(csv_file, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["filename", "latex_symbol"] + transform_names)
 
-# Process manual and synthetic datasets
-with open(manual_csv_file, "r") as f:
-    lines = [line.split(",") for l in f.readlines() if (line := l.removesuffix("\n"))][1:]
-generate(lines, manual_dir, number_samples_manual)
+    symbol_list = [s[0] for s in symbols]
+    # Process manual and synthetic datasets
+    with open(manual_csv_file, "r") as f:
+        lines = [line.split(",") for l in f.readlines() if (line := l.removesuffix("\n"))][1:]
+        lines = [l for l in lines if l[1] in symbol_list]
+        lines.sort()
+    generate(lines, manual_dir, number_samples_manual)
 
-with open(synthetic_csv_file, "r") as f:
-    lines = [line.split(",") for l in f.readlines() if (line := l.removesuffix("\n"))][1:]
-generate(lines, synthetic_dir, number_samples_synthetic)
+    with open(synthetic_csv_file, "r") as f:
+        lines = [line.split(",") for l in f.readlines() if (line := l.removesuffix("\n"))][1:]
+        lines = [l for l in lines if l[1] in symbol_list]
+        lines.sort()
 
-print(f"Dataset created in '{output_dir}'")
+    generate(lines, synthetic_dir, number_samples_synthetic)
+
+    print(f"Dataset created in '{output_dir}'")

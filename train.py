@@ -1,84 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, random_split, Dataset
-import torchvision.transforms as transforms
-import pandas as pd
+from torch.utils.data import DataLoader, random_split
 import os
 import matplotlib.pyplot as plt
-from PIL import Image
 import csv
 from symbols import symbols
-from concurrent.futures import ThreadPoolExecutor
-from tqdm import tqdm
-from model import SymbolCNN, crop_to_content
+from model import SymbolCNN
+from dataset import SymbolDataset, image_size
 
 label_mapping = {symbol[0]: i for i, symbol in enumerate(symbols)}
-
-# Dataset configuration
-image_size = (32, 32)
-
-
-class SymbolDataset(Dataset):
-    def __init__(
-        self,
-        csv_file,
-        root_dir,
-        transform=None,
-        crop_to_content=False,
-        load_directly=False,
-        num_workers=None,
-    ):
-        self.data = pd.read_csv(csv_file)
-        self.root_dir = root_dir
-        self.transform = transform
-        self.crop_to_content = crop_to_content
-        self.load_directly = load_directly
-        self.num_workers = num_workers if num_workers else os.cpu_count() // 2
-
-        self.labels = [label_mapping[str(label)] for label in self.data.iloc[:, 1]]
-
-        print(f"Dataset with {len(self.data)} samples.")
-        if load_directly:
-            with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-                self.loaded_data = list(
-                    tqdm(
-                        executor.map(self.load, range(len(self.data))),
-                        total=len(self.data),
-                        desc="Loading Images",
-                    )
-                )
-        else:
-            print("Data will be loaded on demand.")
-
-    def load(self, idx):
-        img_name = os.path.join(self.root_dir, self.data.iloc[idx, 0])
-        try:
-            image = Image.open(img_name)
-        except Exception as e:
-            print(f"Error loading image {img_name}: {e}")
-            return None, 0, 0, None  # Return None for both image and label on failure
-
-        if self.crop_to_content:
-            image = crop_to_content(image)
-
-        width, height = image.size
-
-        if self.transform:
-            image = self.transform(image)
-
-        label = self.labels[idx]
-        # print("loaded", label, idx)
-        return image, width, height, label
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        if self.load_directly:
-            return self.loaded_data[idx]
-        else:
-            return self.load(idx)
 
 
 def log_metrics(metrics, epoch, metrics_path):
@@ -203,52 +134,32 @@ def train_model(model, train_loader, test_loader, num_epochs=10, learning_rate=0
     plt.show()
 
 
-# Data loading and processing
-transform = transforms.Compose(
-    [
-        transforms.Resize(image_size),
-        transforms.ToTensor(),
-    ]
-)
-
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.abspath(__file__))
     dataset_dir = os.path.join(base_dir, "mixed_dataset")
     csv_path = os.path.join(base_dir, "mixed_dataset.csv")
-    model_dir = os.path.join(base_dir, "augmented_models_3")
-    metrics_path = os.path.join(model_dir, "augmented_metrics_3.csv")
+    model_dir = os.path.join(base_dir, "augmented_models_4")
+    metrics_path = os.path.join(model_dir, "augmented_metrics_4.csv")
+
+    dataset_path = os.path.join(base_dir, "dataset.pth")
+    dataset = torch.load(dataset_path)
 
     os.makedirs(model_dir, exist_ok=True)
-    dataset = SymbolDataset(
-        csv_file=csv_path,
-        root_dir=dataset_dir,
-        transform=transform,
-        load_directly=True,
-    )
 
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
-    batch_size = 32
-    num_workers = 1
+    batch_size = 64
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        # num_workers=num_workers,
-        # pin_memory=True,
-        # persistent_workers=True,
-        # prefetch_factor=2,
     )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
         shuffle=True,
-        # num_workers=num_workers,
-        # pin_memory=True,
-        # persistent_workers=True,
-        # prefetch_factor=2,
     )
 
     num_classes = len(symbols)

@@ -1,5 +1,7 @@
 # Datasets
 mixed_dataset/
+dataset.pth
+main.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
