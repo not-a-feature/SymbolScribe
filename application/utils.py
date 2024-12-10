@@ -15,8 +15,8 @@ def crop_to_content(img, image_size):
 
     # Calculate dimensions to maintain width / height aspect ratio
     cropped_width, cropped_height = cropped_img.size
-    target_height = max(cropped_height, int(cropped_width * (image_size[1] / image_size[0])))
-    target_width = max(cropped_width, int(cropped_height * (image_size[0] / image_size[1])))
+    target_height = max(cropped_height, cropped_width)
+    target_width = max(cropped_width, cropped_height)
 
     # Add padding to center the cropped content
     pad_left = (target_width - cropped_width) // 2

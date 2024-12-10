@@ -6,7 +6,7 @@ from dataset import image_size, transform
 from PIL import Image
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(base_dir, "augmented_models_4", "checkpoint_45.pth")
+model_path = os.path.join(base_dir, "augmented_models_4", "checkpoint_10.pth")
 
 model = SymbolCNN(num_classes=len(symbols), image_size=image_size)  # Initialize the model
 model.load_state_dict(torch.load(model_path, weights_only=True))

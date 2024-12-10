@@ -51,17 +51,9 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    transform = transforms.Compose(
-        [
-            transforms.Resize(image_size),
-            transforms.ToTensor(),
-        ]
-    )
-
     dataset = SymbolDataset(
         csv_file=csv_path,
         root_dir=output_dir,
-        transform=transform,
         crop_to_content=True,
         load_directly=True,
     )

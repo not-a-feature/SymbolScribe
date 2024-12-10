@@ -12,7 +12,7 @@ model_path = path.abspath(path.join(base_path, "SymbolCNN.onnx"))
 symbol_path = path.join(base_path, "symbols")
 icon_path = path.join(base_path, "icon.ico")
 
-image_size = (50, 30)  # Width / Height
+image_size = (32, 32)  # Width / Height
 
 about_text = f"""
 SymbolScribe is a simple LaTeX symbol recognition tool.
@@ -52,27 +52,15 @@ ort_session = ort.InferenceSession(model_path)
 
 
 def infer(input_img):
-    print("Input ", input_img)
     cropped_img = crop_to_content(input_img, image_size)
-    print("Cropped ", cropped_img)
-
     width, height = cropped_img.size
-    print(f"Cropped size: {width}, {height}")
+
     # Resize and convert to grayscale
     resized_img = cropped_img.resize(image_size, Image.BILINEAR).convert("L")
 
-    print("Resized ", resized_img)
     img_np = np.array(resized_img).astype(np.float32) / 255.0
-    print(img_np)
-    print("IMG NP: ", img_np.shape)
-
-    img_np = np.transpose(img_np, axes=(1, 0))
-    print("IMG Trans: ", img_np.shape)
-    # img_np = np.rot90(img_np, k=1)  # Swap dimensions to (height, width) as
     img_np = np.expand_dims(img_np, axis=0)  # Add batch dimension
-    # img_np = np.expand_dims(img_np, axis=0)  # Add channel dimension
-
-    print("IMG Exp: ", img_np.shape)
+    img_np = np.expand_dims(img_np, axis=0)  # Add channel dimension
 
     # ONNX runtime inference
     ort_inputs = {
