@@ -14,7 +14,7 @@ import numpy as np
 top_N = 5
 num_checkpoints = 50
 num_chunks = 5
-skip_chunk = 0
+skip_chunk = 1
 
 
 def validate(model, dataloader, num_samples):
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         plt.plot(
             k_values,
             avg_acc,
-            alpha=0.3,
+            alpha=0.5,
             label=f"Avg. Epoch {start} - {end}",
         )
 
@@ -118,12 +118,13 @@ if __name__ == "__main__":
         label=f"Best Checkpoint (Epoch {best_checkpoint})",
     )
     print(accuracies)
+    print(f"Best checkpoint: {best_checkpoint} with accuracy {best_acc}")
 
     plt.xlabel("k")
     plt.ylabel("Top-k Accuracy")
-    plt.title("Top-k Accuracy vs. k for Different Checkpoints")
+    # plt.title("Top-k Accuracy vs. k for Different Checkpoints")
     plt.grid(True)
-    plt.legend()
+    plt.legend(loc="lower right")
+    plt.tight_layout()
 
-    print(f"Best checkpoint: {best_checkpoint} with accuracy {best_acc}")
     plt.show()
