@@ -53,7 +53,7 @@ ort_session = ort.InferenceSession(model_path)
 
 def infer(input_img):
     cropped_img = crop_to_content(input_img, image_size)
-    width, height = cropped_img.size
+    size, _ = cropped_img.size
 
     # Resize and convert to grayscale
     resized_img = cropped_img.resize(image_size, Image.BILINEAR).convert("L")
@@ -61,12 +61,15 @@ def infer(input_img):
     img_np = np.array(resized_img).astype(np.float32) / 255.0
     img_np = np.expand_dims(img_np, axis=0)  # Add batch dimension
     img_np = np.expand_dims(img_np, axis=0)  # Add channel dimension
+    from matplotlib import pyplot as plt
 
+    plt.imshow(img_np[0][0])
+    plt.show()
     # ONNX runtime inference
     ort_inputs = {
         ort_session.get_inputs()[0].name: img_np,
-        ort_session.get_inputs()[1].name: np.array([width], dtype=np.int64),
-        ort_session.get_inputs()[2].name: np.array([height], dtype=np.int64),
+        ort_session.get_inputs()[1].name: np.array([size], dtype=np.int64),
+        # ort_session.get_inputs()[2].name: np.array([height], dtype=np.int64),
     }
     output = ort_session.run(None, ort_inputs)[0]
 

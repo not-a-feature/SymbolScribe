@@ -11,7 +11,7 @@ from symbols import symbols
 import numpy as np
 
 top_N = 5
-num_checkpoints = 50
+num_checkpoints = 100
 num_chunks = 5
 skip_chunk = 1
 
@@ -25,12 +25,12 @@ def validate(model, dataloader, num_samples):
     topk_correct = {k: 0 for k in k_values}
 
     with torch.no_grad():
-        for images, widths, heights, labels in dataloader:
+        for images, sizes, labels in dataloader:
             images = images.to(device)
-            widths, heights = widths.to(device), heights.to(device)
+            sizes = sizes.to(device)
             labels = labels.to(device)
 
-            output = model(images, widths, heights)
+            output = model(images, sizes)
 
             _, predicted = output.topk(max(k_values), 1, True, True)
 

@@ -8,6 +8,7 @@ from symbols import symbols
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 from PIL import Image, ImageChops, ImageOps
+import warnings
 
 label_mapping = {symbol[0]: i for i, symbol in enumerate(symbols)}
 
@@ -91,24 +92,31 @@ class SymbolDataset(Dataset):
             image = Image.open(img_name)
         except Exception as e:
             print(f"Error loading image {img_name}: {e}")
-            return None, 0, 0, None
+            return None, 0, None
+        width, height = image.size
 
         if self.crop_to_content:
             try:
                 image = crop_to_content(image)
             except Exception as e:
                 print(f"Error cropping image {img_name}: {e}")
-                return None, 0, 0, None
+                return None, 0, None
 
         width, height = image.size
+        if width != height:
+            size = (width + height) // 2
+            warnings.warn(f"Image {img_name} is not square: {width}x{height}. Using {size}.")
+        else:
+            size = width
+
         try:
             image = self.transform(image)
         except Exception as e:
             print(f"Error transforming image {img_name}: {e}")
-            return None, 0, 0, None
+            return None, 0, None
 
         label = self.labels[idx]
-        return image, width, height, label
+        return image, size, label
 
     def __len__(self):
         return len(self.data)

@@ -25,7 +25,7 @@ class SymbolCNN(nn.Module):
 
         # Fully connected layers that take both flattened features and w/h
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(conv_out_shape[0] * conv_out_shape[1] * conv_out_shape[2] + 2, 64)
+        self.fc1 = nn.Linear(conv_out_shape[0] * conv_out_shape[1] * conv_out_shape[2] + 1, 64)
         # +2 for width and height
         self.bn4 = nn.BatchNorm1d(64)
         self.fc2 = nn.Linear(64, num_classes)
@@ -36,19 +36,15 @@ class SymbolCNN(nn.Module):
         x = self.pool(torch.relu(self.bn3(self.conv3(x))))
         return x
 
-    def forward(self, x, widths, heights):
+    def forward(self, x, sizes):
         x = self._forward_conv(x)
         x = self.flatten(x)
 
         # Normalize width and height before concatenating
-        widths = widths.float() / self.pre_crop_size[0]  # Normalize width
-        heights = heights.float() / self.pre_crop_size[1]  # Normalize height
-
-        # Concatenate and add dimension
-        wh = torch.cat((widths.unsqueeze(1), heights.unsqueeze(1)), dim=1)
+        sizes = sizes.float() / max(self.pre_crop_size)  # Normalize width
 
         # Concatenate flattened convolutional features and width/height
-        x = torch.cat((x, wh), dim=1)
+        x = torch.cat((x, sizes.unsqueeze(1)), dim=1)
 
         x = torch.relu(self.bn4(self.fc1(x)))
         x = self.dropout(x)

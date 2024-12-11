@@ -48,13 +48,13 @@ def train_model(model, train_loader, test_loader, num_epochs=10, learning_rate=0
         # Training
         model.train()
         running_loss, correct_train, total_train, top5_train = 0.0, 0, 0, 0
-        for images, widths, heights, labels in train_loader:
+        for images, sizes, labels in train_loader:
             images = images.to(device)
-            widths, heights = widths.to(device), heights.to(device)
+            sizes = sizes.to(device)
             labels = labels.to(device)
 
             optimizer.zero_grad()
-            outputs = model(images, widths, heights)
+            outputs = model(images, sizes)
 
             loss = criterion(outputs, labels)
             loss.backward()
@@ -74,12 +74,12 @@ def train_model(model, train_loader, test_loader, num_epochs=10, learning_rate=0
         model.eval()
         test_loss, correct_test, total_test, top5_test = 0.0, 0, 0, 0
         with torch.no_grad():
-            for images, widths, heights, labels in test_loader:
+            for images, sizes, labels in test_loader:
                 images = images.to(device)
-                widths, heights = widths.to(device), heights.to(device)
+                sizes = sizes.to(device)
                 labels = labels.to(device)
 
-                outputs = model(images, widths, heights)
+                outputs = model(images, sizes)
 
                 loss = criterion(outputs, labels)
                 test_loss += loss.item()
